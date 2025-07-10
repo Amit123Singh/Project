@@ -10,6 +10,7 @@ export interface Fund {
   schemeType?: string;
   schemeCategory?: string;
   isin?: string;
+  schemeStartDate: string;
   nav?: number;
   date?: string;
 }
