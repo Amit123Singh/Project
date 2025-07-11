@@ -10,14 +10,12 @@ export interface Fund {
   schemeType?: string;
   schemeCategory?: string;
   isin?: string;
-  schemeStartDate: string;
   nav?: number;
   date?: string;
 }
 
 export interface FundDetail {
   fund: Fund;
-  status: string;
   data: Array<{
     date: string;
     nav: string;
