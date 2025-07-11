@@ -39,38 +39,44 @@ const Comparison: React.FC = () => {
     }
   };
 
-  const prepareChartData = () => {
-    if (fundDetails.length === 0) return [];
+ const prepareChartData = () => {
+  if (fundDetails.length === 0) return [];
 
-    // Get all unique dates
-    const allDates = new Set<string>();
+  // Step 1: Collect all unique dates
+  const allDatesSet = new Set<string>();
+  fundDetails.forEach(detail => {
+    detail.data.forEach(entry => allDatesSet.add(entry.date));
+  });
+
+  // Step 2: Sort using proper manual dd-mm-yyyy parsing
+  const sortedDates = Array.from(allDatesSet).sort((a, b) => {
+    const parseDate = (str: string) => {
+      const [dd, mm, yyyy] = str.split('-').map(Number);
+      return new Date(yyyy, mm - 1, dd).getTime();
+    };
+    return parseDate(a) - parseDate(b);
+  });
+
+  // Step 3: Map over dates to build chart points
+  const chartData = sortedDates.map(date => {
+    const dataPoint: any = { date };
+
     fundDetails.forEach(detail => {
-      detail.data.forEach(entry => allDates.add(entry.date));
+      const fundName = `${detail.fund.schemeName.slice(0, 30)}... (${detail.fund.schemeCode})`;
+      const entry = detail.data.find(d => d.date === date);
+      dataPoint[fundName] = entry ? parseFloat(entry.nav) : null;
     });
 
-    // Sort dates
-    const sortedDates = Array.from(allDates).sort();
+    return dataPoint;
+  });
 
-    // Take last 100 data points for better visualization
-    const recentDates = sortedDates.slice(-100);
+  // Optional: Filter points where all funds have null
+  return chartData.filter(point =>
+    Object.entries(point).some(([key, value]) => key !== 'date' && value !== null)
+  );
+};
 
-    // Create chart data
-    const chartData = recentDates.map(date => {
-      const dataPoint: any = { date };
-      
-      fundDetails.forEach(detail => {
-        const fundName = `${detail.fund.schemeName.slice(0, 30)}... (${detail.fund.schemeCode})`;
-        const entry = detail.data.find(d => d.date === date);
-        dataPoint[fundName] = entry ? parseFloat(entry.nav) : null;
-      });
-      
-      return dataPoint;
-    });
 
-    return chartData.filter(point => 
-      Object.values(point).some(value => value !== null && value !== point.date)
-    );
-  };
 
   const chartData = prepareChartData();
   const fundNames = fundDetails.map(detail => `${detail.fund.schemeName.slice(0, 30)}... (${detail.fund.schemeCode})`);
